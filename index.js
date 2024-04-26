@@ -38,10 +38,111 @@ function verifyToken(req, res, next) {
 app.use(express.json());
 
 // Servera statiska filer från "public" mappen
-app.use(express.static(path.join(__dirname, "public")));
+// app.use(express.static(path.join(__dirname, "public")));
 
 // Root route som serverar HTML-filen från "public" mappen
 app.get("/", (req, res) => {
+  // res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.send(`
+  <h1>API Dokumentation</h1>
+
+  <h2>Gränssnitt</h2>
+  <h3>API Routes</h3>
+  <ul>
+    <li><strong>GET /users:</strong> Returnerar en lista av alla användare.</li>
+    <li><strong>GET /user/:id:</strong> Returnerar en användare angiven av det ID som anges.</li>
+    <li><strong>POST /user:</strong> Skapar en ny användare.</li>
+    <li><strong>PUT /user/:id:</strong> Uppdaterar en användare angiven av det ID som anges. Kräver inloggning (användning av verifyToken-middleware).</li>
+    <li><strong>POST /login:</strong> Loggar in en användare och returnerar en JWT-token.</li>
+    <li><strong>GET /protected-route:</strong> Kräver inloggning (användning av verifyToken-middleware).</li>
+  </ul>
+
+  <h2>Endpoints</h2>
+
+  <h3>GET /users</h3>
+  <p>Returnerar en lista över alla användare från databasen.</p>
+  <p><strong>Exempel på svar:</strong></p>
+  <ul>
+    <li>Status: 200 OK</li>
+    <li>Innehåll: JSON med en lista över användare</li>
+  </ul>
+
+  <h3>GET /user/:id</h3>
+  <p>Returnerar en användare baserat på det angivna ID:et.</p>
+  <p><strong>Exempel på svar:</strong></p>
+  <ul>
+    <li>Status: 200 OK</li>
+    <li>Innehåll: JSON med användarinformation</li>
+  </ul>
+  <p><strong>Möjliga fel:</strong></p>
+  <ul>
+    <li>Status: 404 Not Found</li>
+    <li>Innehåll: JSON med ett felmeddelande</li>
+  </ul>
+
+  <h3>POST /user</h3>
+  <p>Skapar en ny användare med det angivna användarnamnet och lösenordet.</p>
+  <p><strong>Innehåll:</strong> JSON med <code>username</code> och <code>password</code></p>
+  <p><strong>Exempel på svar:</strong></p>
+  <ul>
+    <li>Status: 201 Created</li>
+    <li>Innehåll: JSON med den nya användarens ID, användarnamn och det krypterade lösenordet</li>
+  </ul>
+  <p><strong>Möjliga fel:</strong></p>
+  <ul>
+    <li>Status: 400 Bad Request</li>
+    <li>Innehåll: JSON med ett felmeddelande</li>
+  </ul>
+
+  <h3>PUT /user/:id</h3>
+  <p>Uppdaterar en användare baserat på det angivna ID:et. Kräver autentisering (JWT-token).</p>
+  <p><strong>Innehåll:</strong> JSON med <code>username</code> och <code>password</code></p>
+  <p><strong>Exempel på svar:</strong></p>
+  <ul>
+    <li>Status: 200 OK</li>
+    <li>Innehåll: JSON med den uppdaterade användarens information</li>
+  </ul>
+  <p><strong>Möjliga fel:</strong></p>
+  <ul>
+    <li>Status: 401 Unauthorized (om token är ogiltig)</li>
+    <li>Status: 404 Not Found (om användaren inte finns)</li>
+  </ul>
+
+  <h3>POST /login</h3>
+  <p>Loggar in en användare med användarnamn och lösenord, och returnerar en JWT-token.</p>
+  <p><strong>Innehåll:</strong> JSON med <code>username</code> och <code>password</code></p>
+  <p><strong>Exempel på svar:</strong></p>
+  <ul>
+    <li>Status: 200 OK</li>
+    <li>Innehåll: JSON med en JWT-token</li>
+  </ul>
+  <p><strong>Möjliga fel:</strong></p>
+  <ul>
+    <li>Status: 404 Not Found (om användaren inte finns)</li>
+    <li>Status: 401 Unauthorized (om lösenordet är fel)</li>
+  </ul>
+
+  <h3>GET /protected-route</h3>
+  <p>Returnerar ett meddelande om att åtkomst har beviljats, samt information om användaren. Kräver autentisering (JWT-token).</p>
+  <p><strong>Exempel på svar:</strong></p>
+  <ul>
+    <li>Status: 200 OK</li>
+    <li>Innehåll: JSON med ett meddelande och användarinformation</li>
+  </ul>
+
+  <h2>Felmeddelanden</h2>
+  <p>Alla endpoints kan returnera JSON som innehåller ett felmeddelande i fallet av ett fel, såsom statuskoderna 400, 401, 404 och 500. Felmeddelanden innehåller vanligtvis en kort förklaring av vad som gick fel.</p>
+
+  <h2>Säkerhet</h2>
+  <ul>
+    <li>Använd JWT-token för att autentisera användare för skyddade rutter.</li>
+    <li>Lösenord krypteras med bcrypt innan de lagras i databasen.</li>
+    <li>Förvara inte känslig information i klartext i koden, såsom <code>secretKey</code>. Använd istället miljövariabler.</li>
+  </ul>
+`);
+});
+
+app.get("/livetest", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
@@ -66,7 +167,9 @@ app.post("/user", async (req, res) => {
         res.status(400).json({ error: err.message });
       } else {
         // Användare framgångsrikt tillagd
-        res.status(201).json({ id: results.insertId, username });
+        res
+          .status(201)
+          .json({ id: results.insertId, username, password, hashedPassword });
       }
     });
   } catch (error) {
