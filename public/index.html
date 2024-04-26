@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>API-dokumentation</title>
+  </head>
+
+  <body style="padding: 50px">
+    <h1>API-dokumentation</h1>
+    <h2>API Routes</h2>
+    <ul>
+      <li>
+        <strong>GET /users</strong> - Returnerar en lista av alla användare
+      </li>
+      <li>
+        <strong>GET /user/:id</strong> - Returnerar en användare angiven av det
+        ID som anges
+      </li>
+      <li><strong>POST /user</strong> - Skapar en ny användare</li>
+      <li>
+        <strong>PUT /user/:id</strong> - Uppdaterar en användare angiven av det
+        ID som anges - Kräver inloggning
+      </li>
+      <li><strong>POST /login</strong> - Loggar in en användare</li>
+      <li><strong>GET /protected-route</strong> - Kräver inloggning</li>
+    </ul>
+
+    <h2>Anropa API:erna</h2>
+
+    <h3>GET /users</h3>
+    <p>Få en lista med alla användare i databasen</p>
+    <button onclick="getUsers()">Hämta alla användare</button>
+    <pre id="usersOutput"></pre>
+
+    <br />
+
+    <h3>GET /user/:id</h3>
+    <p>Få information om användare med angivet ID</p>
+    <label for="userId">Ange användar-ID</label><br />
+    <input type="number" id="userId" min="1" required />
+    <button onclick="getUser()">Hämta användare</button>
+    <pre id="userOutput"></pre>
+
+    <br />
+
+    <h3>POST /user</h3>
+    <p>Sign up</p>
+    <form id="createUserForm">
+      <label for="username">Användarnamn</label><br />
+      <input type="text" id="username" required /><br /><br />
+      <label for="password">Lösenord</label><br />
+      <input type="password" id="password" required /><br /><br />
+      <button type="submit">Skapa användare</button>
+    </form>
+    <pre id="createUserOutput"></pre>
+
+    <br />
+
+    <h3>PUT /user/:id</h3>
+    <p>Uppdatera användare med angivet ID - Kräver inloggning</p>
+    <form id="updateUserForm">
+      <label for="updateUserId">Ange användar-ID</label><br />
+      <input type="number" id="updateUserId" min="1" required /><br /><br />
+      <label for="updateUsername">Uppdaterat användarnamn</label><br />
+      <input type="text" id="updateUsername" /><br /><br />
+      <label for="updatePassword">Uppdaterat lösenord</label><br />
+      <input type="password" id="updatePassword" /><br /><br />
+      <button type="submit">Uppdatera användare</button>
+    </form>
+    <pre id="updateUserOutput"></pre>
+
+    <br />
+
+    <h3>POST /login</h3>
+    <p>Log in</p>
+    <form id="loginForm">
+      <label for="loginUsername">Användarnamn</label><br />
+      <input type="text" id="loginUsername" required /><br /><br />
+      <label for="loginPassword">Lösenord</label><br />
+      <input type="password" id="loginPassword" required /><br /><br />
+      <button type="submit">Logga in</button>
+    </form>
+    <pre id="loginOutput"></pre>
+
+    <br />
+
+    <h3>GET /protected-route</h3>
+    <p>Testa JWT token</p>
+    <label for="tokenInput">Klistra in din JWT-token här</label><br />
+    <input type="text" id="tokenInput" /><br /><br />
+    <button onclick="checkAccess()">Kontrollera access</button>
+
+    <pre id="accessOutput"></pre>
+
+    <script>
+      // GET /users
+      function getUsers() {
+        fetch("http://localhost:3000/users")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("usersOutput").textContent = JSON.stringify(
+              data,
+              null,
+              2
+            );
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      // GET /user/:id
+      function getUser() {
+        const userId = document.getElementById("userId").value;
+        fetch(`http://localhost:3000/user/${userId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("userOutput").textContent = JSON.stringify(
+              data,
+              null,
+              2
+            );
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      // POST /user
+      document
+        .getElementById("createUserForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+
+          fetch("http://localhost:3000/user", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username,
+              password,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              document.getElementById("createUserOutput").textContent =
+                JSON.stringify(data, null, 2);
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+
+      // PUT /user/:id
+      document
+        .getElementById("updateUserForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const userId = document.getElementById("updateUserId").value;
+          const username = document.getElementById("updateUsername").value;
+          const password = document.getElementById("updatePassword").value;
+
+          fetch(`http://localhost:3000/user/${userId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username,
+              password,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              document.getElementById("updateUserOutput").textContent =
+                JSON.stringify(data, null, 2);
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+
+      // POST /login
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const username = document.getElementById("loginUsername").value;
+          const password = document.getElementById("loginPassword").value;
+
+          fetch("http://localhost:3000/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username,
+              password,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              document.getElementById("loginOutput").textContent =
+                JSON.stringify(data, null, 2);
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+
+      // Funktion för att kontrollera tillgång till den skyddade rutten
+      function checkAccess() {
+        const token = document.getElementById("tokenInput").value;
+
+        // Skicka en GET-förfrågan till /protected-route med token i Authorization-huvudet
+        fetch("http://localhost:3000/protected-route", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              // Om åtkomst beviljas, visa ett meddelande
+              return response.json().then((data) => {
+                document.getElementById(
+                  "accessOutput"
+                ).textContent = `Access granted. User: ${data.user.username}`;
+              });
+            } else {
+              // Om åtkomst nekas, visa ett felmeddelande
+              document.getElementById("accessOutput").textContent =
+                "Access denied: Invalid token or no token provided.";
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            document.getElementById("accessOutput").textContent =
+              "An error occurred.";
+          });
+      }
+    </script>
+  </body>
+</html>
